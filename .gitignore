@@ -1,0 +1,42 @@
+# Node artifact files
+node_modules/
+build/
+cache/
+artifacts/
+dist/
+# docs/
+temp/
+.idea/*
+.eslintcache
+
+# Logs
+logs
+*.log
+
+# MacOs
+.DS_Store
+
+# Vscode
+.vscode/
+
+# coverage
+/coverage.json
+/coverage
+
+# JetBrains IDE
+.idea/
+
+# environment variables
+.env
+
+# deployments
+deployments/localhost/
+deployments/optimistic/
+solcInputs/
+
+# Forge
+forge-cache
+forge-out
+output
+
+typechain/
