@@ -35,7 +35,8 @@ $ yarn hardhat compile
 
 ### Test
 
-Run the tests with Hardhat-foundry:
+Run the tests:
+> :hook: depend on [foundry](https://getfoundry.sh/) and [Hardhat-foundry](https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-foundry)
 
 ```
 $ forge test
