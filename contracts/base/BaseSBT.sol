@@ -25,6 +25,8 @@ contract BaseSBT is
     string internal _baseTokenURI;
     bool internal _transferable;
     CountersUpgradeable.Counter internal _tokenIdCounter;
+    // Optional mapping for token URIs
+    mapping(uint256 => string) private _tokenURIs;
 
     /// @dev Error messages for require statements
     error NotTransferable();
@@ -48,19 +50,6 @@ contract BaseSBT is
     /*//////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
-    function supportsInterface(bytes4 interfaceId) 
-        public 
-        view 
-        virtual 
-        override(ERC721Upgradeable, ERC721EnumerableUpgradeable) 
-        returns (bool) 
-    {
-        return
-            interfaceId == type(IERC721Upgradeable).interfaceId ||
-            interfaceId == type(IERC721EnumerableUpgradeable).interfaceId ||
-            super.supportsInterface(interfaceId);
-    }
-
     function transferFrom(
         address from,
         address to,
@@ -97,6 +86,19 @@ contract BaseSBT is
     /*//////////////////////////////////////////////////////////////
                         External View Functions
     //////////////////////////////////////////////////////////////*/
+    function supportsInterface(bytes4 interfaceId) 
+        public 
+        view 
+        virtual 
+        override(ERC721Upgradeable, ERC721EnumerableUpgradeable) 
+        returns (bool) 
+    {
+        return
+            interfaceId == type(IERC721Upgradeable).interfaceId ||
+            interfaceId == type(IERC721EnumerableUpgradeable).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
     function transferable() external view returns (bool) {
         return _transferable;
     }
@@ -108,11 +110,35 @@ contract BaseSBT is
         return true;
     }
 
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireMinted(tokenId);
+
+        string memory _tokenURI = _tokenURIs[tokenId];
+        // string memory base = _baseURI();
+
+        // // If there is no base URI, return the token URI.
+        // if (bytes(base).length == 0) {
+        //     return _tokenURI;
+        // }
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            // return string(abi.encodePacked(base, _tokenURI));
+            return _tokenURI;
+        }
+
+        return super.tokenURI(tokenId);
+    }
+
     /*//////////////////////////////////////////////////////////////
                         Internal Functions
     //////////////////////////////////////////////////////////////*/
     function _baseURI() internal view virtual override returns (string memory) {
         return _baseTokenURI;
+    }
+
+    function _setTokenURI(uint256 tokenId, string memory tokenURI_) internal virtual {
+        _requireMinted(tokenId);
+        _tokenURIs[tokenId] = tokenURI_;
     }
 
     function _beforeTokenTransfer(
@@ -122,5 +148,20 @@ contract BaseSBT is
         uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+    function _mintBatch(address to, string[] memory tokenURIs) internal virtual {
+        for (uint256 i = 0; i < tokenURIs.length; i++) {
+            _tokenIdCounter.increment();
+            uint256 tokenId = _tokenIdCounter.current();
+            _mint(to, tokenId);
+            _setTokenURI(tokenId, tokenURIs[i]);
+        }
+    }
+
+    function _burnBatch(uint256[] memory tokenIds) internal virtual {
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            _burn(tokenIds[i]);
+        }
     }
 }
