@@ -1,38 +1,45 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol';
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import {ERC721Upgradeable, ERC721EnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-
-import {ICellIDRegistry} from "./interfaces/ICellIDRegistry.sol";
-
-
-error IDAlreadyRegisted(); // Cell ID already registered
-error NotTransferable(); // Cell ID not transferable
-error InvalidTokenId(); // Invalid token id number
+import './interfaces/ICellIDRegistry.sol';
 
 /**
  * @title CellIDRegistry
- * @notice Cell ID registry
+ * @notice Cell ID with a SBT token
+ *         each address can only hold one cell ID
+ *         user can burn cell ID by the owner and mint a new one
+ *         a cell ID can mint by itself or be minted by the admin-role caller
  */
-contract CellIDRegistry is ICellIDRegistry, OwnableUpgradeable, ERC721EnumerableUpgradeable, PausableUpgradeable {
-    event SetTransferable(bool transferable);
-    event Register(address indexed owner, uint256 indexed tokenId);
-    
+contract CellIDRegistry is
+    ICellIDRegistry,
+    OwnableUpgradeable,
+    ERC721EnumerableUpgradeable,
+    PausableUpgradeable
+{
     uint8 public constant VERSION = 1;
     uint256 private _tokenIdCounter;
     bool private _transferable;
+    address public resolveController;
+
+    event SetTransferable(bool transferable);
+    event SetController(address indexed controller);
+
+    error NotRepeatRegister();
+    error NotTransferable(); 
+    error NotApprovedOrOwnerOf();
+    error NotAdminOrSelf(); 
 
     modifier onlyTransferable() {
-        // require(_transferable, "SBT not transferable");
         if (_transferable != true) revert NotTransferable();
         _;
     }
 
-    function initialize(string memory name_, string memory symbol_) initializer external {
+    function initialize(string memory name_, string memory symbol_) external initializer {
         __ERC721_init(name_, symbol_);
         __Ownable_init();
         __Pausable_init();
@@ -41,34 +48,53 @@ contract CellIDRegistry is ICellIDRegistry, OwnableUpgradeable, ERC721Enumerable
     /*//////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
+    /**
+     * @inheritdoc ICellIDRegistry
+     */
+    function register(address to) external override whenNotPaused {
+        if (
+            _msgSender() == to || 
+            _msgSender() == owner() ||
+            _msgSender() == resolveController
+        ) {
+            if (balanceOf(to) > 0) revert NotRepeatRegister();
+
+            unchecked {
+                _tokenIdCounter++;
+            }
+            _safeMint(to, _tokenIdCounter);
+        } else {
+            revert NotAdminOrSelf();
+        }
+    }
+
+    /**
+     * @inheritdoc ICellIDRegistry
+     */
+    function burn(uint256 tokenId) external override whenNotPaused {
+        if (!_isApprovedOrOwner(_msgSender(), tokenId)) revert NotApprovedOrOwnerOf();
+        _burn(tokenId);
+    }
 
     /**
      * @notice Set transferable
-     * 
+     *
      * @param transferable_ The bool transferable
      */
     function setTransferable(bool transferable_) external onlyOwner {
         _transferable = transferable_;
+
         emit SetTransferable(transferable_);
     }
 
-    /// @inheritdoc ICellIDRegistry
-    function register() external whenNotPaused override {
-        if (balanceOf(_msgSender()) > 0) revert IDAlreadyRegisted();
+    /**
+     * @notice Set controller
+     * @param controller_ The address of the controller
+     */
+    function setController(address controller_) external onlyOwner {
+        resolveController = controller_;
 
-        unchecked {
-            ++_tokenIdCounter;
-        }
-        _safeMint(_msgSender(), _tokenIdCounter);
-
-        emit Register(_msgSender(), _tokenIdCounter);
-    }
-
-    /// @inheritdoc ICellIDRegistry
-    function burn(uint256 tokenId) external whenNotPaused override {
-        if (ownerOf(tokenId) != _msgSender()) revert InvalidTokenId();
-
-        super._burn(tokenId);
+        emit SetController(controller_);
     }
 
     /**** Override super transferable functions ****/
@@ -81,7 +107,7 @@ contract CellIDRegistry is ICellIDRegistry, OwnableUpgradeable, ERC721Enumerable
         address from,
         address to,
         uint256 tokenId
-    ) public onlyTransferable override(IERC721Upgradeable, ERC721Upgradeable) {
+    ) public override(IERC721Upgradeable, ERC721Upgradeable) onlyTransferable {
         super.transferFrom(from, to, tokenId);
     }
 
@@ -93,8 +119,8 @@ contract CellIDRegistry is ICellIDRegistry, OwnableUpgradeable, ERC721Enumerable
         address from,
         address to,
         uint256 tokenId
-    ) public onlyTransferable override(IERC721Upgradeable, ERC721Upgradeable) {
-        super.safeTransferFrom(from, to, tokenId, "");
+    ) public override(IERC721Upgradeable, ERC721Upgradeable) onlyTransferable {
+        super.safeTransferFrom(from, to, tokenId, '');
     }
 
     /**
@@ -106,7 +132,7 @@ contract CellIDRegistry is ICellIDRegistry, OwnableUpgradeable, ERC721Enumerable
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public onlyTransferable override(IERC721Upgradeable, ERC721Upgradeable) {
+    ) public override(IERC721Upgradeable, ERC721Upgradeable) onlyTransferable {
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -118,5 +144,16 @@ contract CellIDRegistry is ICellIDRegistry, OwnableUpgradeable, ERC721Enumerable
      */
     function transferable() external view returns (bool) {
         return _transferable;
+    }
+
+    /**
+     * @inheritdoc ICellIDRegistry
+     */
+    function idOf(address to) external view override returns (uint256) {
+        if (balanceOf(to) > 0) {
+            return tokenOfOwnerByIndex(to, 0);
+        } else {
+            return 0;
+        }
     }
 }
