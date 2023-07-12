@@ -8,48 +8,76 @@ import "../contracts/CellIDRegistry.sol";
 contract CellIDRegistryTest is Test {
     CellIDRegistry public cellIDRegistry;
 
-    event Register(address indexed owner, uint256 indexed tokenId);
-
-    address alice = address(0x123);
-    address bob = address(0x456);
+    address alice = address(0x01);
+    address bob = address(0x02);
 
     function setUp() public {
         cellIDRegistry = new CellIDRegistry();
-        cellIDRegistry.initialize("Cell DID", "CELLID");
+        cellIDRegistry.initialize("Cell ID", "CID");
     }
 
-    function testRegister() public {
+    function test_Register() public {
         vm.prank(alice);
-        vm.expectEmit(true, true, false, true);
-        emit Register(alice, 1);
-        cellIDRegistry.register();
+        cellIDRegistry.register(alice);
         assertEq(cellIDRegistry.tokenOfOwnerByIndex(alice, 0), 1);
 
         vm.prank(bob);
-        vm.expectEmit(true, true, false, true);
-        emit Register(bob, 2);
-        cellIDRegistry.register();
+        cellIDRegistry.register(bob);
         assertEq(cellIDRegistry.tokenOfOwnerByIndex(bob, 0), 2);
     }
 
-    function testCannotRegisterTwice() public {
-        vm.startPrank(alice);
-        cellIDRegistry.register();
+    function test_Burn() public {
+        vm.prank(alice);
+        cellIDRegistry.register(alice);
+        assertEq(cellIDRegistry.tokenOfOwnerByIndex(alice, 0), 1);
+        vm.prank(alice);
+        cellIDRegistry.burn(1);
+        assertEq(cellIDRegistry.balanceOf(alice), 0);
+    }
 
-        vm.expectRevert(IDAlreadyRegisted.selector);
-        cellIDRegistry.register();
-        vm.stopPrank();
+    function test_Revert_Register_NotSelf() public {
+        vm.prank(bob);
+        vm.expectRevert(bytes4(keccak256("NotAdminOrSelf()")));
+        cellIDRegistry.register(alice);
+    }
 
-        assertEq(cellIDRegistry.balanceOf(alice), 1);
+    function test_Revert_Register_NotRepeatRegister() public {
+        vm.prank(alice);
+        cellIDRegistry.register(alice);
+        vm.expectRevert(bytes4(keccak256("NotRepeatRegister()")));
+        cellIDRegistry.register(alice);
+    }
+
+    function test_Revert_Burn_NotOwnerOf() public {
+        vm.prank(alice);
+        cellIDRegistry.register(alice);
+        assertEq(cellIDRegistry.tokenOfOwnerByIndex(alice, 0), 1);
+        vm.prank(bob);
+        vm.expectRevert(bytes4(keccak256("NotApprovedOrOwnerOf()")));
+        cellIDRegistry.burn(1);
     }
 
     // can not transferable
-    function testCannotTransferable() public {
+    function test_Revert_NotTransferable() public {
         vm.prank(alice);
-        cellIDRegistry.register();
-
-        vm.expectRevert(NotTransferable.selector);
+        cellIDRegistry.register(alice);
+        vm.expectRevert(bytes4(keccak256("NotTransferable()")));
         cellIDRegistry.transferFrom(alice, bob, 1);
     }
 
+    function test_SetController() public {
+        assertEq(cellIDRegistry.resolveController(), address(0));
+        cellIDRegistry.setController(alice);
+        assertEq(cellIDRegistry.resolveController(), alice);
+    }
+
+    function test_IdOf() public {
+        assertEq(cellIDRegistry.balanceOf(alice), 0);
+        assertEq(cellIDRegistry.idOf(alice), 0);
+        vm.prank(alice);
+        cellIDRegistry.register(alice);
+        assertEq(cellIDRegistry.balanceOf(alice), 1);
+        assertEq(cellIDRegistry.tokenOfOwnerByIndex(alice, 0), 1);
+        assertEq(cellIDRegistry.idOf(alice), 1);
+    }
 }
