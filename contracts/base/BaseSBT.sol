@@ -5,7 +5,6 @@ import '@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 import '../interfaces/IERC5192.sol';
 
@@ -20,18 +19,17 @@ contract BaseSBT is
     ERC721EnumerableUpgradeable,
     IERC5192
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
-
     string internal _baseTokenURI;
     bool internal _transferable;
-    CountersUpgradeable.Counter internal _tokenIdCounter;
     // Optional mapping for token URIs
     mapping(uint256 => string) private _tokenURIs;
 
     /// @dev Error messages for require statements
     error NotTransferable();
+    error NotOwnerOrApproval();
+    error NotApprovedOrOwnerOf();
 
-    modifier whenTransferable() {
+    modifier onlyTransferable() {
         if (_transferable != true) revert NotTransferable();
         _;
     }
@@ -50,11 +48,22 @@ contract BaseSBT is
     /*//////////////////////////////////////////////////////////////
                         External Functions
     //////////////////////////////////////////////////////////////*/
+    
+    /**
+     * @notice Burn a token by the owner of token
+     * 
+     * @param tokenId The token ID to burn
+     */
+    function burn(uint256 tokenId) external virtual {
+        if (!_isApprovedOrOwner(_msgSender(), tokenId)) revert NotApprovedOrOwnerOf();
+        _burn(tokenId);
+    }
+
     function transferFrom(
         address from,
         address to,
         uint256 tokenId
-    ) public override(IERC721Upgradeable, ERC721Upgradeable) whenTransferable {
+    ) public override(IERC721Upgradeable, ERC721Upgradeable) onlyTransferable {
         super.transferFrom(from, to, tokenId);
     }
 
@@ -62,7 +71,7 @@ contract BaseSBT is
         address from,
         address to,
         uint256 tokenId
-    ) public override(IERC721Upgradeable, ERC721Upgradeable) whenTransferable {
+    ) public override(IERC721Upgradeable, ERC721Upgradeable) onlyTransferable {
         super.safeTransferFrom(from, to, tokenId, '');
     }
 
@@ -71,7 +80,7 @@ contract BaseSBT is
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public override(IERC721Upgradeable, ERC721Upgradeable) whenTransferable {
+    ) public override(IERC721Upgradeable, ERC721Upgradeable) onlyTransferable {
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -148,20 +157,5 @@ contract BaseSBT is
         uint256 batchSize
     ) internal override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    }
-
-    function _mintBatch(address to, string[] memory tokenURIs) internal virtual {
-        for (uint256 i = 0; i < tokenURIs.length; i++) {
-            _tokenIdCounter.increment();
-            uint256 tokenId = _tokenIdCounter.current();
-            _mint(to, tokenId);
-            _setTokenURI(tokenId, tokenURIs[i]);
-        }
-    }
-
-    function _burnBatch(uint256[] memory tokenIds) internal virtual {
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            _burn(tokenIds[i]);
-        }
     }
 }
