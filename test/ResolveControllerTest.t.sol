@@ -61,7 +61,7 @@ contract ResolveControllerTest is Test {
 
         assertEq(controller.isNameExist(fullname), true);
         assertEq(controller.getCellID(alice), 1);
-        assertEq(controller.resolveAddress(alice), fullname);
+        assertEq(controller.resolveAddress(alice), bytes32(abi.encodePacked(fullname)));
         assertEq(controller.resolveName(fullname), alice);
     }
 
@@ -92,7 +92,7 @@ contract ResolveControllerTest is Test {
 
         assertEq(controller.isNameExist(fullname), true);
         assertEq(controller.getCellID(alice), 1);
-        assertEq(controller.resolveAddress(alice), fullname);
+        assertEq(controller.resolveAddress(alice), bytes32(abi.encodePacked(fullname)));
         assertEq(controller.resolveName(fullname), alice);
     }
 

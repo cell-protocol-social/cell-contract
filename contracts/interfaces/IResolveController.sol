@@ -29,13 +29,21 @@ interface IResolveController {
     function binding(uint256 cellId, uint256 nameId) external;
 
     /**
+     * @notice Get the name ID binding of the cell ID
+     * 
+     * @param cellId The cell ID
+     * @return The name ID of the cell ID
+     */
+    function getBinding(uint256 cellId) external view returns (uint256);
+
+    /**
      * @notice Resolve the caller address to get it's cell name string
      *         if not binding or Name-NFT had transfered, return ""
      * 
      * @param to address of the resolved
-     * @return address of the name
+     * @return The full name with bytes32
      */
-    function resolveAddress(address to) external view returns (string memory);
+    function resolveAddress(address to) external view returns (bytes32);
 
     /**
      * @notice Resolve the name string to the owner address

@@ -117,7 +117,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @return uint256 of the Cell Name ID
      */
     function getNameIdByName(string memory fname) public view returns (uint256) {
-        return cellNameSpace.idByName(fname);
+        return cellNameSpace.idOfName(fname);
     }
 
     /**
@@ -136,27 +136,27 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @param cellId The cell ID
      * @return uint256 of the Cell Name ID
      */
-    function getBinding(uint256 cellId) public view returns (uint256) {
+    function getBinding(uint256 cellId) public view override returns (uint256) {
         return _bindingOf[cellId];
     }
 
     /**
      * @inheritdoc IResolveController
      */
-    function resolveAddress(address to) external view returns (string memory) {
-        string memory name = cellNameSpace.nameOf(_bindingOf[cellIDRegistry.idOf(to)]);
-        if (cellNameSpace.ownerOf(cellNameSpace.idByName(name)) != to) {
-            return "";
+    function resolveAddress(address to) external view override returns (bytes32) {
+        uint256 nameId = _bindingOf[cellIDRegistry.idOf(to)];
+        if (cellNameSpace.ownerOf(nameId) != to) {
+            return bytes32("");
         } else {
-            return name;
+            return cellNameSpace.nameOfTokenId(nameId);
         }
     }
 
     /**
      * @inheritdoc IResolveController
      */
-    function resolveName(string memory fname) external view returns (address) {
-        return cellNameSpace.ownerOf(cellNameSpace.idByName(fname));
+    function resolveName(string memory fname) external view override returns (address) {
+        return cellNameSpace.ownerOf(cellNameSpace.idOfName(fname));
     }
 
     function _requireTrustSigner(
