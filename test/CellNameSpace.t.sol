@@ -42,6 +42,19 @@ contract CellNameSpaceTest is Test {
         assertEq(ECDSAUpgradeable.recover(dataHash, signature), admin);
     }
 
+    function test_Default() public {
+        assertEq(nameSpace.name(), "Cell NameSpace");
+        assertEq(nameSpace.symbol(), "CNAME");
+        assertEq(nameSpace.treasury(), treasury);
+        assertEq(nameSpace.trustSigner(), admin);
+        assertEq(nameSpace.resolveController(), address(0));
+        assertEq(nameSpace.fee(), fee);
+        assertEq(nameSpace.totalSupply(), 0);
+        assertEq(nameSpace.isExist(fullname), false);
+        assertEq(nameSpace.balanceOf(alice), 0);
+        assertEq(nameSpace.idOfName(fullname), 0);
+    }
+
     function test_Register() public {
         vm.prank(alice);
         vm.deal(alice, 1 ether);
@@ -54,7 +67,7 @@ contract CellNameSpaceTest is Test {
         assertEq(alice.balance, 1 ether - fee);
 
         uint256 tokenId = _generateTokenId(name);
-        assertEq(nameSpace.nameOf(tokenId), fullname);
+        assertEq(nameSpace.nameOfTokenId(tokenId), bytes32(abi.encodePacked(fullname)));
         assertEq(nameSpace.isExist(fullname), true);
         assertEq(nameSpace.tokenOfOwnerByIndex(alice, 0), tokenId);
     }
@@ -65,7 +78,7 @@ contract CellNameSpaceTest is Test {
         assertEq(nameSpace.balanceOf(alice), 1);
 
         uint256 tokenId = _generateTokenId(name);
-        assertEq(nameSpace.nameOf(tokenId), fullname);
+        assertEq(nameSpace.nameOfTokenId(tokenId), bytes32(abi.encodePacked(fullname)));
         assertEq(nameSpace.isExist(fullname), true);
         assertEq(nameSpace.tokenOfOwnerByIndex(alice, 0), tokenId);
     }
@@ -78,7 +91,7 @@ contract CellNameSpaceTest is Test {
         assertEq(nameSpace.balanceOf(alice), 1);
 
         uint256 tokenId = _generateTokenId(name);
-        assertEq(nameSpace.nameOf(tokenId), fullname);
+        assertEq(nameSpace.nameOfTokenId(tokenId), bytes32(abi.encodePacked(fullname)));
         assertEq(nameSpace.isExist(fullname), true);
         assertEq(nameSpace.tokenOfOwnerByIndex(alice, 0), tokenId);
     }

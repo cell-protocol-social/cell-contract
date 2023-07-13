@@ -15,13 +15,6 @@ contract CellNameSpace is
     ERC721EnumerableUpgradeable, 
     PausableUpgradeable 
 {   
-    // store name info
-    struct MetaData {
-        string name;
-        bytes32 nameHash;
-        uint256 creatAt;
-    }
-
     uint8 public constant VERSION = 1;
     string constant SUFFIX = ".cell";
 
@@ -30,8 +23,8 @@ contract CellNameSpace is
     address public resolveController;
     uint256 public fee = 0.01 ether;
 
-    mapping(bytes32 => uint256) public idByNameHash;
-    mapping(uint256 => MetaData) public metaById;
+    // cheap storage tokenId => name(bytes32)
+    mapping(uint256 => bytes32) internal _nameOfTokenId;
 
     event Register(address indexed owner, uint256 indexed tokenId, string name);
     event SetController(address indexed controller);
@@ -97,8 +90,7 @@ contract CellNameSpace is
     function burn(uint256 tokenId) external {
         if (!_isApprovedOrOwner(_msgSender(), tokenId)) revert NotApprovedOrOwnerOf();
 
-        idByNameHash[metaById[tokenId].nameHash] = 0;
-        metaById[tokenId] = MetaData("", bytes32(0), 0);
+        _nameOfTokenId[tokenId] = bytes32("");
         _burn(tokenId);
     }
 
@@ -164,23 +156,26 @@ contract CellNameSpace is
      * @inheritdoc ICellNameSpace
      */
     function isExist(string memory fname_) public view override returns (bool) {
-        bytes32 nameHash = keccak256(bytes(fname_));
-        return idByNameHash[nameHash] != 0;
+        uint256 nameHash = uint256(keccak256(bytes(fname_)));
+        return _nameOfTokenId[nameHash] != bytes32("");
     }
 
     /**
      * @inheritdoc ICellNameSpace
      */
-    function nameOf(uint256 tokenId) public view override returns (string memory) {
-        return metaById[tokenId].name;
+    function nameOfTokenId(uint256 tokenId) public view override returns (bytes32) {
+        return _nameOfTokenId[tokenId];
     }
 
     /**
      * @inheritdoc ICellNameSpace
      */
-    function idByName(string calldata fname_) public view override returns (uint256) {
-        bytes32 nameHash = keccak256(bytes(fname_));
-        return idByNameHash[nameHash];
+    function idOfName(string calldata fname_) public view override returns (uint256) {
+        if (isExist(fname_)) {
+            return uint256(keccak256(bytes(fname_)));
+        } else {
+            return 0;
+        }
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -205,12 +200,8 @@ contract CellNameSpace is
         string memory fname_ = string.concat(name_, SUFFIX);
         if (isExist(fname_)) revert NotRepeatRegister();
 
-        bytes32 nameHash = keccak256(bytes(fname_));
-        uint256 tokenId = uint256(nameHash);
-
-        idByNameHash[nameHash] = tokenId;
-        metaById[tokenId] = MetaData(fname_, nameHash, block.timestamp);
-
+        uint256 tokenId = uint256(keccak256(bytes(fname_)));
+        _nameOfTokenId[tokenId] = bytes32(abi.encodePacked(fname_));
         _safeMint(to_, tokenId);
 
         emit Register(to_, tokenId, fname_);

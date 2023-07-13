@@ -44,24 +44,25 @@ interface ICellNameSpace is IERC721EnumerableUpgradeable {
     /**
      * @notice a name strings has been registered or not
      * 
-     * @param name The name strings
+     * @param fname The full name strings with suffix
      * @return result The boolean of query
      */
-    function isExist(string calldata name) external view returns (bool);
+    function isExist(string calldata fname) external view returns (bool);
 
     /**
      * @notice Get the name strings by tokenId
      * 
      * @param tokenId The uint256 tokenId
+     * @return The full name with bytes32 type
      */
-    function nameOf(uint256 tokenId) external view returns (string memory);
+    function nameOfTokenId(uint256 tokenId) external view returns (bytes32);
 
     /**
      * @notice Get the tokenId by a name strings
      * 
-     * @param name The name strings
-     * @return The address of the name strings
+     * @param fname The full name strings with suffix
+     * @return The tokenId with uint256
      */
-    function idByName(string memory name) external view returns (uint256);
+    function idOfName(string memory fname) external view returns (uint256);
 
 }
