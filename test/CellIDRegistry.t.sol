@@ -8,8 +8,8 @@ import "../contracts/CellIDRegistry.sol";
 contract CellIDRegistryTest is Test {
     CellIDRegistry public cellIDRegistry;
 
-    address alice = address(0x01);
-    address bob = address(0x02);
+    address alice = vm.addr(1);
+    address bob = vm.addr(2);
 
     function setUp() public {
         cellIDRegistry = new CellIDRegistry();
