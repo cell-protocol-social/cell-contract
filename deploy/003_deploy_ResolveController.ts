@@ -14,17 +14,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     skipIfAlreadyDeployed: true,
-    // proxy: {
-    //     owner: deployer,
-    //     proxyContract: 'OptimizedTransparentProxy',
+    proxy: {
+        owner: deployer,
+        proxyContract: 'OptimizedTransparentProxy',
 
-    //     execute: {
-    //         init: {
-    //             methodName: 'initialize',
-    //             args: [cellIDRegistry, cellNameSpace, trustSigner]
-    //         }
-    //     }
-    // }
+        // execute: {
+        //     init: {
+        //         methodName: 'initialize',
+        //         args: [cellIDRegistry, cellNameSpace, trustSigner]
+        //     }
+        // }
+    }
 
   })
 
