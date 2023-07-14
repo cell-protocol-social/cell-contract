@@ -8,20 +8,18 @@ interface IExpirePromptSBT {
      *         the token will not expire
      * 
      * @param to The address to mint to
-     * @param tokenId The token ID to mint
      * @param _tokenURI The token URI of the token ID
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI) external;
+    function mint(address to, string memory _tokenURI) external;
 
     /**
      * @notice Mint a expireTime token only by the owner or the trust singer
      * 
      * @param to The address to mint to
-     * @param tokenId The token ID to mint
      * @param _tokenURI The token URI of the token ID
      * @param expireTime The expire time of the token ID
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI, uint256 expireTime) external;
+    function mint(address to, string memory _tokenURI, uint256 expireTime) external;
 
     /**
      * @notice Renew a expireTime token only by the owner or the trust singer

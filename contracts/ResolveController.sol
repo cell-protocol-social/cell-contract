@@ -24,6 +24,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
     error NotIDOwner();
     error SignatureExpired();
     error InvalidSignature();
+    error InvalidZeroAddress();
 
     function initialize(
         ICellIDRegistry cellIDRegistry_, 
@@ -42,7 +43,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
     function register(string calldata name, uint256 deadline, bytes calldata signature) external override {
         _requireTrustSigner(address(this), _msgSender(), name, deadline, signature);
         
-        if (cellIDRegistry.balanceOf(_msgSender()) == 0) {
+        if (cellIDRegistry.balanceOf(_msgSender()) <= 0) {
             // if not register, register a Cell ID
             cellIDRegistry.register(_msgSender());
         }
@@ -93,6 +94,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @param trustSigner_ The address of the trust signer
      */
     function setTrustSigner(address trustSigner_) external onlyOwner {
+        if (trustSigner_ == address(0)) revert InvalidZeroAddress();
         trustSigner = trustSigner_;
     }
 
@@ -106,7 +108,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @param fname The full name strings
      * @return bool of the name is exist
      */
-    function isNameExist(string memory fname) public view returns (bool) {
+    function isNameExist(string memory fname) external view returns (bool) {
         return cellNameSpace.isExist(fname);
     }
 
@@ -116,7 +118,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @param fname The full name strings
      * @return uint256 of the Cell Name ID
      */
-    function getNameIdByName(string memory fname) public view returns (uint256) {
+    function getNameIdByName(string memory fname) external view returns (uint256) {
         return cellNameSpace.idOfName(fname);
     }
 
@@ -126,7 +128,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @param to address of the resolved
      * @return uint256 of the Cell ID
      */
-    function getCellID(address to) public view returns (uint256) {
+    function getCellID(address to) external view returns (uint256) {
         return cellIDRegistry.idOf(to);
     }
 
@@ -136,7 +138,7 @@ contract ResolveController is Initializable, OwnableUpgradeable, IResolveControl
      * @param cellId The cell ID
      * @return uint256 of the Cell Name ID
      */
-    function getBinding(uint256 cellId) public view override returns (uint256) {
+    function getBinding(uint256 cellId) external view override returns (uint256) {
         return _bindingOf[cellId];
     }
 

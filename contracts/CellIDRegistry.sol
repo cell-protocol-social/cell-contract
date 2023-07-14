@@ -33,9 +33,10 @@ contract CellIDRegistry is
     error NotTransferable(); 
     error NotApprovedOrOwnerOf();
     error NotAdminOrSelf(); 
+    error InvalidZeroAddress();
 
     modifier onlyTransferable() {
-        if (_transferable != true) revert NotTransferable();
+        if (!_transferable) revert NotTransferable();
         _;
     }
 
@@ -92,6 +93,7 @@ contract CellIDRegistry is
      * @param controller_ The address of the controller
      */
     function setController(address controller_) external onlyOwner {
+        if (controller_ == address(0)) revert InvalidZeroAddress();
         resolveController = controller_;
 
         emit SetController(controller_);

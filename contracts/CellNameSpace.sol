@@ -163,14 +163,14 @@ contract CellNameSpace is
     /**
      * @inheritdoc ICellNameSpace
      */
-    function nameOfTokenId(uint256 tokenId) public view override returns (bytes32) {
+    function nameOfTokenId(uint256 tokenId) external view override returns (bytes32) {
         return _nameOfTokenId[tokenId];
     }
 
     /**
      * @inheritdoc ICellNameSpace
      */
-    function idOfName(string calldata fname_) public view override returns (uint256) {
+    function idOfName(string calldata fname_) external view override returns (uint256) {
         if (isExist(fname_)) {
             return uint256(keccak256(bytes(fname_)));
         } else {

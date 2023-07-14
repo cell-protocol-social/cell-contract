@@ -30,7 +30,7 @@ contract BaseSBT is
     error NotApprovedOrOwnerOf();
 
     modifier onlyTransferable() {
-        if (_transferable != true) revert NotTransferable();
+        if (!_transferable) revert NotTransferable();
         _;
     }
 

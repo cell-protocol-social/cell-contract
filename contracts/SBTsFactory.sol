@@ -27,6 +27,7 @@ contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, 
     error InvalidBatch();
     error InvalidExpireArg();
     error InvalidLength();
+    error InvalidZeroAddress();
 
     function initialize(address trustSigner_) initializer external {
         __Ownable_init();
@@ -97,8 +98,7 @@ contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, 
             if (!_validSbtContracts[sbtAddrs[i]]) revert InvalidContract();
 
             ExpirePromptSBT sbt = ExpirePromptSBT(sbtAddrs[i]);
-            uint256 tokenId = sbt.totalSupply() + 1;
-            sbt.mint(msg.sender, tokenId, tokenURIs[i]);
+            sbt.mint(msg.sender, tokenURIs[i]);
         }
     }
 
@@ -125,8 +125,7 @@ contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, 
             if (expireTimes[i] < block.timestamp) revert InvalidExpireArg();
 
             ExpirePromptSBT sbt = ExpirePromptSBT(sbtAddrs[i]);
-            uint256 tokenId = sbt.totalSupply() + 1;
-            sbt.mint(msg.sender, tokenId, tokenURIs[i], expireTimes[i]);
+            sbt.mint(msg.sender, tokenURIs[i], expireTimes[i]);
         }
     }
 
@@ -149,6 +148,7 @@ contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, 
      * @inheritdoc ISBTsFactory
      */
     function setTrustSigner(address trustSigner_) external override onlyOwner {
+        if (trustSigner_ == address(0)) revert InvalidZeroAddress();
         trustSigner = trustSigner_;
     }
 

@@ -6,10 +6,12 @@ import "./interfaces/IExpirePromptSBT.sol";
 
 contract ExpirePromptSBT is IExpirePromptSBT, BaseSBT {
     address public trustFactory;
+    uint256 private _tokenIdCounter;
     mapping(uint256 => uint256) internal _expireOfTokenId;
 
     error NotOwnerOf();
     error NotOwnerOrFromTrust();
+    error InvalidZeroAddress();
 
     function initialize(
         string memory name_,
@@ -24,18 +26,20 @@ contract ExpirePromptSBT is IExpirePromptSBT, BaseSBT {
     /**
      * @inheritdoc IExpirePromptSBT
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI) external override virtual {
+    function mint(address to, string memory _tokenURI) external override virtual {
         _requireOwnerOrFromTrust(); 
-        _mintTrust(to, tokenId, _tokenURI);
+        _tokenIdCounter++;
+        _mintTrust(to, _tokenIdCounter, _tokenURI);
     }
     
     /**
      * @inheritdoc IExpirePromptSBT
      */
-    function mint(address to, uint256 tokenId, string memory _tokenURI, uint256 expireTime) external override virtual {
+    function mint(address to, string memory _tokenURI, uint256 expireTime) external override virtual {
         _requireOwnerOrFromTrust(); 
-        _expireOfTokenId[tokenId] = expireTime;
-        _mintTrust(to, tokenId, _tokenURI);
+        _tokenIdCounter++;
+        _expireOfTokenId[_tokenIdCounter] = expireTime;
+        _mintTrust(to, _tokenIdCounter, _tokenURI);
     } 
 
     function burn(uint256 tokenId) external override virtual {
@@ -69,6 +73,7 @@ contract ExpirePromptSBT is IExpirePromptSBT, BaseSBT {
     }
 
     function setTrustFactory(address trustFactory_) external onlyOwner {
+        if (trustFactory_ == address(0)) revert InvalidZeroAddress();
         trustFactory = trustFactory_;
     }
 
