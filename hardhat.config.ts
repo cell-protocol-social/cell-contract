@@ -35,7 +35,7 @@ const config: HardhatUserConfig = {
   paths: {
     sources: './contracts/', 
     artifacts: "./build/artifacts",
-    cache: "./cache",
+    cache: "./build/cache",
   },
   typechain: {
     outDir: "./build/typechain/",
