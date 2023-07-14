@@ -22,8 +22,9 @@ contract ExpirePromptSBTTest is Test {
     }
 
     function test_Mint_ByOwner() public {
-        uint256 id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(alice, id, "001");
+        
+        promptSBT.mint(alice, "001");
+        uint256 id = promptSBT.totalSupply();
 
         assertEq(promptSBT.ownerOf(id), alice);
         assertEq(promptSBT.tokenURI(id), "001");
@@ -31,7 +32,8 @@ contract ExpirePromptSBTTest is Test {
         assertEq(promptSBT.tokenOfOwnerByIndex(alice, 0), id);
 
         id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(bob, id, "002");
+        promptSBT.mint(bob, "002");
+        id = promptSBT.totalSupply();
 
         assertEq(promptSBT.ownerOf(id), bob);
         assertEq(promptSBT.tokenURI(id), "002");
@@ -41,16 +43,17 @@ contract ExpirePromptSBTTest is Test {
 
     function test_Mint_ByTrust() public {
         vm.prank(admin);
-        uint256 id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(alice, id, "001");
+        
+        promptSBT.mint(alice, "001");
+        uint256 id = promptSBT.totalSupply();
 
         assertEq(promptSBT.ownerOf(id), alice);
         assertEq(promptSBT.tokenURI(id), "001");
         assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(alice, 0), id);
 
-        id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(bob, id, "002");
+        promptSBT.mint(bob, "002");
+        id = promptSBT.totalSupply();
 
         assertEq(promptSBT.ownerOf(id), bob);
         assertEq(promptSBT.tokenURI(id), "002");
@@ -59,9 +62,9 @@ contract ExpirePromptSBTTest is Test {
     }
 
     function test_MintExpire() public {
-        uint256 id = promptSBT.totalSupply() + 1;
         uint256 expireAt = block.timestamp + 100;
-        promptSBT.mint(alice, id, "001", expireAt);
+        promptSBT.mint(alice, "001", expireAt);
+        uint256 id = promptSBT.totalSupply();
 
         assertEq(promptSBT.ownerOf(id), alice);
         assertEq(promptSBT.tokenURI(id), "001");
@@ -76,9 +79,10 @@ contract ExpirePromptSBTTest is Test {
     }
 
     function test_Renew() public {
-        uint256 id = promptSBT.totalSupply() + 1;
+        
         uint256 expireAt = block.timestamp + 100;
-        promptSBT.mint(alice, id, "001", expireAt);
+        promptSBT.mint(alice, "001", expireAt);
+        uint256 id = promptSBT.totalSupply();
 
         assertEq(promptSBT.ownerOf(id), alice);
         assertEq(promptSBT.tokenURI(id), "001");
