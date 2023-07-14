@@ -18,23 +18,23 @@ contract ExpirePromptSBTTest is Test {
 
     function setUp() public {
         promptSBT = new ExpirePromptSBT();
-        promptSBT.initialize("Prompt-A SBT", "PPT-A", "https://cell.xyz/", admin);
+        promptSBT.initialize("Prompt-A SBT", "PPT-A", "", admin);
     }
 
     function test_Mint_ByOwner() public {
         uint256 id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(alice, id, "https://cell.xyz/001");
+        promptSBT.mint(alice, id, "001");
 
         assertEq(promptSBT.ownerOf(id), alice);
-        assertEq(promptSBT.tokenURI(id), "https://cell.xyz/001");
+        assertEq(promptSBT.tokenURI(id), "001");
         assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(alice, 0), id);
 
         id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(bob, id, "https://cell.xyz/002");
+        promptSBT.mint(bob, id, "002");
 
         assertEq(promptSBT.ownerOf(id), bob);
-        assertEq(promptSBT.tokenURI(id), "https://cell.xyz/002");
+        assertEq(promptSBT.tokenURI(id), "002");
         assertEq(promptSBT.balanceOf(bob), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(bob, 0), id);
     }
@@ -42,18 +42,18 @@ contract ExpirePromptSBTTest is Test {
     function test_Mint_ByTrust() public {
         vm.prank(admin);
         uint256 id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(alice, id, "https://cell.xyz/001");
+        promptSBT.mint(alice, id, "001");
 
         assertEq(promptSBT.ownerOf(id), alice);
-        assertEq(promptSBT.tokenURI(id), "https://cell.xyz/001");
+        assertEq(promptSBT.tokenURI(id), "001");
         assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(alice, 0), id);
 
         id = promptSBT.totalSupply() + 1;
-        promptSBT.mint(bob, id, "https://cell.xyz/002");
+        promptSBT.mint(bob, id, "002");
 
         assertEq(promptSBT.ownerOf(id), bob);
-        assertEq(promptSBT.tokenURI(id), "https://cell.xyz/002");
+        assertEq(promptSBT.tokenURI(id), "002");
         assertEq(promptSBT.balanceOf(bob), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(bob, 0), id);
     }
@@ -61,10 +61,10 @@ contract ExpirePromptSBTTest is Test {
     function test_MintExpire() public {
         uint256 id = promptSBT.totalSupply() + 1;
         uint256 expireAt = block.timestamp + 100;
-        promptSBT.mint(alice, id, "https://cell.xyz/001", expireAt);
+        promptSBT.mint(alice, id, "001", expireAt);
 
         assertEq(promptSBT.ownerOf(id), alice);
-        assertEq(promptSBT.tokenURI(id), "https://cell.xyz/001");
+        assertEq(promptSBT.tokenURI(id), "001");
         assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(alice, 0), id);
         assertEq(promptSBT.expireOf(id),expireAt );
@@ -78,10 +78,10 @@ contract ExpirePromptSBTTest is Test {
     function test_Renew() public {
         uint256 id = promptSBT.totalSupply() + 1;
         uint256 expireAt = block.timestamp + 100;
-        promptSBT.mint(alice, id, "https://cell.xyz/001", expireAt);
+        promptSBT.mint(alice, id, "001", expireAt);
 
         assertEq(promptSBT.ownerOf(id), alice);
-        assertEq(promptSBT.tokenURI(id), "https://cell.xyz/001");
+        assertEq(promptSBT.tokenURI(id), "001");
         assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(alice, 0), id);
         assertEq(promptSBT.expireOf(id),expireAt );
@@ -92,7 +92,7 @@ contract ExpirePromptSBTTest is Test {
         assertEq(promptSBT.isExpire(id), true);
 
         uint256 newExpireAt = block.timestamp + 100;
-        promptSBT.renew(id, "https://cell.xyz/new001", newExpireAt);
+        promptSBT.renew(id, "new001", newExpireAt);
         assertEq(promptSBT.ownerOf(id), alice);
         assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.expireOf(id), newExpireAt);
@@ -109,6 +109,47 @@ contract ExpirePromptSBTTest is Test {
 
         assertEq(promptSBT.totalSupply(), 1);
         assertEq(promptSBT.balanceOf(alice), 0);
+        assertEq(promptSBT.tokenOfOwnerByIndex(bob, 0), 2);
+    }
+
+    function test_BurnFrom() public {
+        test_Mint_ByTrust();
+
+        assertEq(promptSBT.totalSupply(), 2);
+
+        vm.prank(admin);
+        promptSBT.burnFrom(alice, 1);
+
+        assertEq(promptSBT.totalSupply(), 1);
+        assertEq(promptSBT.balanceOf(alice), 0);
+        assertEq(promptSBT.tokenOfOwnerByIndex(bob, 0), 2);
+    }
+
+    function test_Revert_BurnFrom_NotOwnerOf() public {
+        test_Mint_ByTrust();
+
+        assertEq(promptSBT.totalSupply(), 2);
+
+        vm.prank(admin);
+        vm.expectRevert(bytes4(keccak256("NotOwnerOf()")));
+        promptSBT.burnFrom(admin, 1);
+
+        assertEq(promptSBT.totalSupply(), 2);
+        assertEq(promptSBT.balanceOf(alice), 1);
+        assertEq(promptSBT.tokenOfOwnerByIndex(bob, 0), 2);
+    }
+
+    function test_Revert_BurnFrom_NotApprovedOrOwnerOf() public {
+        test_Mint_ByTrust();
+
+        assertEq(promptSBT.totalSupply(), 2);
+
+        vm.prank(bob);
+        vm.expectRevert(bytes4(keccak256("NotApprovedOrOwnerOf()")));
+        promptSBT.burnFrom(alice, 1);
+
+        assertEq(promptSBT.totalSupply(), 2);
+        assertEq(promptSBT.balanceOf(alice), 1);
         assertEq(promptSBT.tokenOfOwnerByIndex(bob, 0), 2);
     }
 }
