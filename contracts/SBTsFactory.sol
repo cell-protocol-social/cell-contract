@@ -155,8 +155,8 @@ contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, 
     /**
      * @inheritdoc ISBTsFactory
      */
-    function getSigNonce() external view override returns (uint256) {
-        return _sigNonces[msg.sender];
+    function getSigNonce(address to) external view override returns (uint256) {
+        return _sigNonces[to];
     }
 
     /**

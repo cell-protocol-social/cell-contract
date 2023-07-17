@@ -80,9 +80,10 @@ interface ISBTsFactory {
     /**
      * @notice Get the signature nonce of the user
      * 
+     * @param to The user address
      * @return the signature nonce of the user
      */
-    function getSigNonce() external view returns (uint256);
+    function getSigNonce(address to) external view returns (uint256);
 
     /**
      * @notice Check if the SBT contract is valid
