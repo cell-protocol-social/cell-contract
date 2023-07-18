@@ -32,11 +32,11 @@ const config: HardhatUserConfig = {
       accounts: [`${process.env.DEPLOYER_KEY}`]
     },
     mumbai: {
-      url: `https://polygon-mumbai.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
       accounts: [`${process.env.DEPLOYER_KEY}`],
     },
     polygon: {
-      url: `https://polygon.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      url: `https://polygon.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
       accounts: [`${process.env.DEPLOYER_KEY}`],
     },
   },
@@ -61,7 +61,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_KEY,
-      polygon: process.env.POLYGONSCAN_KEY,
+      polygon: process.env.POLYGONSCAN_KEY
     }
   }
 };
