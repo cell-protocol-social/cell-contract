@@ -31,9 +31,7 @@ contract SBTsFactoryTest is Test {
     }
 
     function test_Default() public {
-        vm.startPrank(alice);
-        assertEq(factory.getSigNonce(), 0);
-        vm.stopPrank();
+        assertEq(factory.getSigNonce(alice), 0);
 
         factory.addSBTContract(vm.addr(4));
         assertEq(factory.sbtContracts(3), vm.addr(4));
@@ -65,10 +63,8 @@ contract SBTsFactoryTest is Test {
         typeContracts[3] = typeC;
 
         uint256 deadline = block.timestamp + 1000;
-        vm.startPrank(alice);
-        uint256 sigNonces = factory.getSigNonce() + 1;
+        uint256 sigNonces = factory.getSigNonce(alice) + 1;
         bytes32 dataHash = keccak256(abi.encodePacked(address(factory), alice, sigNonces, deadline));
-        vm.stopPrank();
 
         bytes memory signature = _createSign(dataHash);
         address addr = ECDSA.recover(dataHash, signature);
@@ -106,11 +102,9 @@ contract SBTsFactoryTest is Test {
         expireTimes[2] = block.timestamp + 300;
 
         uint256 deadline = block.timestamp + 1000;
-        vm.startPrank(alice);
-        uint256 sigNonces = factory.getSigNonce() + 1;
+        uint256 sigNonces = factory.getSigNonce(alice) + 1;
         bytes32 dataHash = keccak256(abi.encodePacked(address(factory), alice, sigNonces, deadline));
-        vm.stopPrank();
-
+        
         bytes memory signature = _createSign(dataHash);
         address addr = ECDSA.recover(dataHash, signature);
         assertEq(addr, admin);
