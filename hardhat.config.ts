@@ -25,8 +25,20 @@ const config: HardhatUserConfig = {
     },
     goerli: {
       url: `https://eth-goerli.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
-      accounts: [process.env.DEPLOYER_KEY]
-    }
+      accounts: [`${process.env.DEPLOYER_KEY}`]
+    },
+    mainnet: {
+      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      accounts: [`${process.env.DEPLOYER_KEY}`]
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      accounts: [`${process.env.DEPLOYER_KEY}`],
+    },
+    polygon: {
+      url: `https://polygon.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+      accounts: [`${process.env.DEPLOYER_KEY}`],
+    },
   },
   namedAccounts: {
     deployer: 0,
@@ -47,7 +59,10 @@ const config: HardhatUserConfig = {
     gasPrice: 21
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_KEY
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_KEY,
+      polygon: process.env.POLYGONSCAN_KEY,
+    }
   }
 };
 
