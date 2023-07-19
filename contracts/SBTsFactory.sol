@@ -10,6 +10,7 @@ import "./interfaces/ISBTsFactory.sol";
 import "./ExpirePromptSBT.sol";
 
 contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, ISBTsFactory {
+    using ECDSAUpgradeable for bytes32;
     uint8 public constant VERSION = 1;
 
     address public trustSigner;
@@ -179,6 +180,7 @@ contract SBTsFactory is Initializable, OwnableUpgradeable, PausableUpgradeable, 
     ) internal view virtual {
         if (deadline_ <= block.timestamp) revert ExpiredSignature();
         bytes32 hash = keccak256(abi.encodePacked(contractAddress_, to_, sigNonces_, deadline_));
-        if (ECDSAUpgradeable.recover(hash, signature_) != trustSigner) revert InvalidSignature();
+        bytes32 ethHash = hash.toEthSignedMessageHash();
+        if (ethHash.recover(signature_) != trustSigner) revert InvalidSignature();
     }
 }

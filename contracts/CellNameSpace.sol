@@ -15,6 +15,7 @@ contract CellNameSpace is
     ERC721EnumerableUpgradeable, 
     PausableUpgradeable 
 {   
+    using ECDSAUpgradeable for bytes32;
     uint8 public constant VERSION = 1;
     string constant SUFFIX = ".cell";
 
@@ -191,7 +192,8 @@ contract CellNameSpace is
     ) internal view {
         if (deadline_ <= block.timestamp) revert SignatureExpired();
         bytes32 hash = keccak256(abi.encodePacked(contractAddress, to_, name_, deadline_));
-        if (ECDSAUpgradeable.recover(hash, signature_) != trustSigner) revert InvalidSignature();
+        bytes32 ethHash = hash.toEthSignedMessageHash();
+        if (ethHash.recover(signature_) != trustSigner) revert InvalidSignature();
     }
 
     function _register(string memory name_, address to_) internal {
