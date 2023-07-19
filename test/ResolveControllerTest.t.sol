@@ -8,6 +8,7 @@ import "../contracts/CellNameSpace.sol";
 import "../contracts/ResolveController.sol";
 
 contract ResolveControllerTest is Test {
+    using ECDSA for bytes32;
     CellIDRegistry cellIDRegistry;
     CellNameSpace nameSpace;
     ResolveController controller;
@@ -22,8 +23,9 @@ contract ResolveControllerTest is Test {
     string fullname = "0xalice.cell";
     uint256 fee;
 
-    function _createSign(bytes32 dataHash) internal pure returns (bytes memory) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, dataHash);
+    function _createEthSign(bytes32 dataHash) internal pure returns (bytes memory) {
+        bytes32 hash = dataHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, hash);
         return abi.encodePacked(r, s, v);
     }
 
@@ -69,7 +71,7 @@ contract ResolveControllerTest is Test {
         vm.prank(alice);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(controller), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         vm.expectRevert(bytes4(keccak256("InvalidSignature()")));
         controller.register("errorName", deadline, signature);
     }
@@ -78,7 +80,7 @@ contract ResolveControllerTest is Test {
         vm.prank(alice);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(controller), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         vm.expectRevert(bytes4(keccak256("SignatureExpired()")));
         controller.register(name, 0, signature);
     }
@@ -87,7 +89,7 @@ contract ResolveControllerTest is Test {
         vm.prank(alice);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(controller), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         controller.register(name, deadline, signature);
 
         assertEq(controller.isNameExist(fullname), true);

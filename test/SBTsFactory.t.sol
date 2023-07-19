@@ -9,14 +9,16 @@ import "../contracts/SBTsFactory.sol";
 interface IPromptSBT is IExpirePromptSBT, IERC721Enumerable {}
 
 contract SBTsFactoryTest is Test {
+    using ECDSA for bytes32;
     SBTsFactory factory;
 
     address admin = vm.addr(1);
     address alice = vm.addr(2);
     address bob = vm.addr(3);
 
-    function _createSign(bytes32 dataHash) internal pure returns (bytes memory) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, dataHash);
+    function _createEthSign(bytes32 dataHash) internal pure returns (bytes memory) {
+        bytes32 hash = dataHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, hash);
         return abi.encodePacked(r, s, v);
     }
 
@@ -65,9 +67,10 @@ contract SBTsFactoryTest is Test {
         uint256 deadline = block.timestamp + 1000;
         uint256 sigNonces = factory.getSigNonce(alice) + 1;
         bytes32 dataHash = keccak256(abi.encodePacked(address(factory), alice, sigNonces, deadline));
+        bytes memory signature = _createEthSign(dataHash);
 
-        bytes memory signature = _createSign(dataHash);
-        address addr = ECDSA.recover(dataHash, signature);
+        bytes32 ethHash = dataHash.toEthSignedMessageHash();
+        address addr = ethHash.recover(signature);
         assertEq(addr, admin);
 
         vm.prank(alice);
@@ -105,9 +108,7 @@ contract SBTsFactoryTest is Test {
         uint256 sigNonces = factory.getSigNonce(alice) + 1;
         bytes32 dataHash = keccak256(abi.encodePacked(address(factory), alice, sigNonces, deadline));
         
-        bytes memory signature = _createSign(dataHash);
-        address addr = ECDSA.recover(dataHash, signature);
-        assertEq(addr, admin);
+        bytes memory signature = _createEthSign(dataHash);
 
         vm.prank(alice);
         factory.batchMint(typeContracts, tokenURIs, expireTimes, deadline, signature);

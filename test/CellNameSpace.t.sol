@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import "../contracts/CellNameSpace.sol";
 
 contract CellNameSpaceTest is Test {
+    using ECDSA for bytes32;
     CellNameSpace nameSpace;
 
     address admin = vm.addr(1);
@@ -18,8 +19,9 @@ contract CellNameSpaceTest is Test {
     string fullname = "0xalice.cell";
     uint256 fee;
 
-    function _createSign(bytes32 dataHash) internal pure returns (bytes memory) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, dataHash);
+    function _createEthSign(bytes32 dataHash) internal pure returns (bytes memory) {
+        bytes32 hash = dataHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, hash);
         return abi.encodePacked(r, s, v);
     }
 
@@ -37,9 +39,11 @@ contract CellNameSpaceTest is Test {
 
     function test_PureSign() public {
         uint256 deadline = block.timestamp + 1000;
-        bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
-        assertEq(ECDSAUpgradeable.recover(dataHash, signature), admin);
+        bytes32 hash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
+        bytes memory signature = _createEthSign(hash);
+        
+        bytes32 dataHash = hash.toEthSignedMessageHash();
+        assertEq(dataHash.recover(signature), admin);
     }
 
     function test_Default() public {
@@ -60,7 +64,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         nameSpace.register{value: fee}(name, deadline, signature);
         assertEq(nameSpace.balanceOf(alice), 1);
         assertEq(address(nameSpace).balance, fee);
@@ -123,7 +127,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         vm.expectRevert(bytes4(keccak256("InsufficientFunds()")));
         nameSpace.register(name, deadline, signature);
     }
@@ -136,7 +140,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         vm.expectRevert(bytes4(keccak256("NotRepeatRegister()")));
         nameSpace.register{value: fee}(name, deadline, signature);
     }
@@ -151,7 +155,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         vm.expectRevert(bytes4(keccak256("SignatureExpired()")));
         nameSpace.register{value: fee}(name, 0, signature);
     }
@@ -161,7 +165,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         vm.expectRevert(bytes4(keccak256("InvalidSignature()")));
         nameSpace.register{value: fee}("errorName", deadline, signature);
     }
@@ -171,7 +175,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         nameSpace.register{value: fee}(name, deadline, signature);
         assertEq(address(nameSpace).balance, fee);
         vm.stopPrank();
@@ -186,7 +190,7 @@ contract CellNameSpaceTest is Test {
         vm.deal(alice, 1 ether);
         uint256 deadline = block.timestamp + 1000;
         bytes32 dataHash = keccak256(abi.encodePacked(address(nameSpace), alice, name, deadline));
-        bytes memory signature = _createSign(dataHash);
+        bytes memory signature = _createEthSign(dataHash);
         nameSpace.register{value: fee}(name, deadline, signature);
         assertEq(address(nameSpace).balance, fee);
         vm.stopPrank();
